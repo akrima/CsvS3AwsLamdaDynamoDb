@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+
+Description: 'CsvS3AwsLambdaDynamoDb SAM Template'
+
+Globals:
+  Function:
+    Timeout: 30  # Adjust as needed
+
+Resources:
+  # IAM Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: s3-aws-lambda-dynamodb-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  CsvS3LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.akrima.CsvS3AwsLambdaDynamoDb.handler.S3EventHandler::handleRequest
+      Runtime: java17
+      CodeUri: target/CsvS3AwsLambdaDynamoDb-0.0.1-SNAPSHOT.jar  # Update with the actual path to your JAR file
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  S3EventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CsvS3LambdaFunction.Arn
+      Principal: s3.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:s3:::akrimas3bucket/*  # Replace with your actual AWS S3 bucket name
+
+  UserDataDynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: UserData
+      AttributeDefinitions:
+        - AttributeName: ID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ID
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5  # Adjust based on your expected workload
+
+Outputs:
+  CsvS3LambdaFunctionArn:
+    Description: 'ARN of the Lambda function processing S3 events'
+    Value: !GetAtt CsvS3LambdaFunction.Arn
+
+  UserDataDynamoDBTableArn:
+    Description: 'ARN of the DynamoDB table storing user data'
+    Value: !GetAtt UserDataDynamoDBTable.Arn
