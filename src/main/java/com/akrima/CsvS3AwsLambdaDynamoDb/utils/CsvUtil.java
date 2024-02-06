@@ -1,5 +1,6 @@
 package com.akrima.CsvS3AwsLambdaDynamoDb.utils;
 
+
 import com.akrima.CsvS3AwsLambdaDynamoDb.model.UserData;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
@@ -8,9 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +56,4 @@ public class CsvUtil {
             throw new RuntimeException("CSV reading exception", e);
         }
     }
-
-
 }
